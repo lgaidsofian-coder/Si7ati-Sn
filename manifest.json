@@ -1,23 +1,19 @@
 {
   "id": "SI7ATI_SN",
   "name": "FitPro Arabia",
-  "short_name": "FitPro",
+  "short_name": "si7ati Sn",
   "description": "تطبيق رياضي لإدارة التمارين والصحة",
   "start_url": "https://lgaidsofian-coder.github.io/Si7ati-Sn/",
   "display": "standalone",
-  "background_color": "#5BB349",
-  "theme_color": "#000000",
+  "background_color": "#121212",
+  "theme_color": "#ff4500",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://www.pwabuilder.com/assets/icons/icon_192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://www.pwabuilder.com/assets/icons/icon_512.png",
+      "src": "1000118502.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
