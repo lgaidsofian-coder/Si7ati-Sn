@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>⚡ Sport Matrix</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:#040407;color:#fff;font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:#080810;}
+::-webkit-scrollbar-thumb{background:#2a2a45;border-radius:2px;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+@keyframes slideIn{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes ringPulse{0%{transform:scale(0.4);opacity:0.8}100%{transform:scale(2.2);opacity:0}}
+
+/* ── Layout ── */
+#app{max-width:440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── Top bar ── */
+#topBar{background:#06060f;padding:12px;border-bottom:1px solid #1a1a2e;text-align:center;flex-shrink:0;}
+#appTitle{color:#ffa500;font-weight:900;font-size:15px;letter-spacing:2px;margin-bottom:10px;}
+#dayRow{display:flex;gap:4px;justify-content:center;}
+.dayBtn{flex:1;background:#111124;border:1px solid #1f1f3d;color:#666;padding:7px 0;border-radius:6px;font-size:10px;font-weight:bold;cursor:pointer;}
+.dayBtn.active{background:#ffa500;color:#000;border-color:#ffa500;}
+
+/* ── Tab bar ── */
+#tabBar{display:flex;background:#07070f;border-bottom:1px solid #1a1a2e;flex-shrink:0;}
+.tabBtn{flex:1;padding:13px 2px;background:none;border:none;color:#555;font-weight:bold;font-size:10px;cursor:pointer;border-bottom:2px solid transparent;}
+.tabBtn.active{color:#ffa500;border-bottom:2px solid #ffa500;background:rgba(255,165,0,0.04);}
+
+/* ── Content ── */
+#content{padding:12px;overflow-y:auto;flex:1;}
+.tabPane{display:none;animation:slideIn 0.3s ease;}
+.tabPane.active{display:block;}
+
+/* ── Cards ── */
+.card{background:#0d0d18;border:1px solid #1e1e38;border-radius:14px;padding:14px;margin-bottom:12px;}
+.sectionTitle{font-size:12px;font-weight:bold;color:#fff;border-right:3px solid #ffa500;padding-right:8px;text-align:right;}
+
+/* ── Cardio ── */
+#mapCard{padding:10px;}
+#mapHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+#startBtn{background:#4ade80;border:none;color:#000;font-size:11px;font-weight:800;padding:7px 16px;border-radius:8px;cursor:pointer;}
+#startBtn.running{background:#ff4757;}
+#clearBtn{background:#1e1e38;border:1px solid #333;color:#888;font-size:10px;padding:7px 12px;border-radius:8px;cursor:pointer;display:none;}
+#gpsWarn{color:#ff4757;font-size:10px;padding:4px 8px;background:#ff475715;border-radius:6px;display:none;}
+#mapLabel{color:#ffa500;font-size:11px;font-weight:bold;font-family:monospace;}
+
+/* ── Canvas map ── */
+#mapWrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid #1a2535;}
+#mapHud{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;background:linear-gradient(to bottom,rgba(8,12,20,0.95),transparent);pointer-events:none;}
+#hudStatus{display:flex;align-items:center;gap:5px;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;letter-spacing:1px;}
+#hudStatus.idle{background:rgba(20,25,40,0.9);border:1px solid #1e2a3a;color:#334;}
+#hudStatus.live{background:rgba(255,71,87,0.15);border:1px solid rgba(255,71,87,0.5);color:#ff4757;}
+#hudStatus.searching{background:rgba(255,165,0,0.12);border:1px solid rgba(255,165,0,0.4);color:#ffa500;}
+#hudDot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;animation:pulse 1s infinite;}
+#hudStats{display:flex;gap:16px;}
+.hudStat{text-align:center;}
+.hudVal{font-size:15px;font-weight:900;font-family:monospace;}
+.hudUnit{font-size:8px;color:#445;}
+#routeCanvas{width:100%;height:260px;display:block;}
+#mapStats{background:rgba(6,8,16,0.97);border-top:1px solid #1a2535;display:none;justify-content:space-around;padding:8px 0;}
+.mapStat{text-align:center;}
+.mapStatVal{color:#ffa500;font-size:14px;font-weight:900;font-family:monospace;text-shadow:0 0 6px rgba(255,165,0,0.4);}
+.mapStatUnit{font-size:9px;color:#334;}
+.mapStatLbl{color:#334;font-size:9px;}
+
+/* ── Telemetry ── */
+.telGrid{display:flex;gap:10px;margin-bottom:8px;}
+.telBox{flex:1;background:#131324;padding:10px;border-radius:8px;text-align:center;border:1px solid #1f1f3d;}
+.telLabel{font-size:9px;color:#666;margin-bottom:5px;}
+.telVal{font-size:22px;font-weight:900;color:#fff;font-family:monospace;}
+#distInput{background:#06060c;border:1px solid #ffa500;border-radius:5px;color:#fff;font-size:20px;font-weight:bold;width:90%;text-align:center;outline:none;padding:4px;font-family:monospace;}
+.btnRow{display:flex;gap:8px;margin-top:12px;}
+.actionBtn{flex:1;border:none;padding:12px;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer;}
+
+/* ── Meals ── */
+.statsRow{display:flex;gap:10px;margin-top:10px;}
+.statField{flex:1;}
+.statLabel{color:#666;font-size:10px;margin-bottom:4px;text-align:right;}
+.statInput{width:100%;background:#0d0d18;border:1px solid #1e1e38;border-radius:8px;padding:9px;font-size:16px;text-align:center;color:#fff;outline:none;font-family:monospace;}
+#bmiBox{margin-top:12px;background:#0a0a18;border-radius:10px;padding:10px 12px;border:1px solid #1e1e38;display:none;}
+#bmiRow{display:flex;justify-content:space-between;margin-bottom:6px;}
+#bmiLabel{font-size:12px;font-weight:bold;}
+#bmiVal{color:#fff;font-size:14px;font-weight:900;}
+#bmiBar{height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;}
+#bmiBarFill{height:100%;border-radius:3px;background:linear-gradient(90deg,#60a5fa 25%,#4ade80 45%,#fbbf24 70%,#f87171 100%);transition:width 0.5s ease;}
+#bmiTicks{display:flex;justify-content:space-between;margin-top:3px;}
+#goalBox{margin-top:8px;background:#0a1a0a;border-radius:8px;padding:8px 12px;border:1px solid #1a2e1a;text-align:right;display:none;}
+#goalText{color:#4ade80;font-size:11px;}
+
+.phaseRow{display:flex;background:#14142b;padding:3px;border-radius:8px;margin-bottom:14px;}
+.phaseBtn{flex:1;background:none;border:none;color:#888;padding:9px;font-weight:bold;font-size:12px;cursor:pointer;border-radius:6px;}
+.phaseBtn.active{background:#ffa500;color:#000;}
+
+#calCircleWrap{text-align:center;margin:10px 0 16px;}
+#macroRow{display:flex;justify-content:space-around;border-top:1px solid #1a1a35;padding-top:14px;}
+.macroRing{text-align:center;width:80px;}
+.macroRingWrap{position:relative;width:60px;height:60px;margin:0 auto;}
+.macroRingWrap svg{display:block;}
+.macroCenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.macroG{font-weight:900;font-size:12px;color:#fff;}
+.macroGUnit{font-size:7px;color:#666;}
+.macroLbl{font-size:10px;font-weight:bold;margin-top:5px;}
+
+.foodList{max-height:210px;overflow-y:auto;margin-top:10px;}
+.foodRow{display:flex;align-items:center;justify-content:space-between;background:#121225;padding:9px 10px;border-radius:8px;margin-bottom:5px;border:1px solid #1f1f3d;}
+.foodInfo{text-align:right;}
+.foodName{font-size:12px;font-weight:bold;color:#fff;}
+.foodMacro{font-size:10px;color:#888;}
+.addFoodBtn{background:#ffa500;border:none;color:#000;font-size:10px;font-weight:bold;padding:5px 10px;border-radius:5px;cursor:pointer;}
+
+#plateTitle{color:#ff4757;}
+#emptyPlate{color:#334155;text-align:center;padding:20px;font-size:12px;}
+.plateItem{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#141428;border-radius:7px;margin-bottom:4px;border-right:3px solid #ffa500;animation:slideIn 0.2s ease;}
+.plateItem span{color:#fff;font-size:12px;}
+.removeBtn{background:none;border:none;color:#ff4757;font-size:18px;font-weight:bold;cursor:pointer;padding:0 4px;}
+#clearPlateRow{display:flex;justify-content:flex-end;margin-top:8px;}
+#clearPlateBtn{background:#1e1e38;border:1px solid #ff4757;color:#ff4757;font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;}
+
+/* ── Gym ── */
+#muscleGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.muscleCard{background:#0d0d18;border:1px solid #1e1e38;border-radius:14px;padding:18px 12px;text-align:center;cursor:pointer;display:flex;flex-direction:column;gap:7px;align-items:center;transition:border-color 0.2s;}
+.muscleEmoji{font-size:30px;}
+.muscleName{color:#fff;font-weight:bold;font-size:12px;}
+.muscleBadge{font-size:10px;padding:3px 8px;border-radius:10px;}
+#exerciseView{display:none;}
+#backBtn{background:#1e1e35;border:none;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;margin-bottom:12px;cursor:pointer;}
+#exerciseCard{border-radius:12px;overflow:hidden;border:1px solid #1e1e3a;}
+#animWrap{background:#06060b;display:flex;align-items:center;justify-content:center;padding:16px;border-bottom:1px solid #1e1e3a;min-height:170px;}
+#exerciseBody{padding:14px;}
+#exHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+#setsBadge{color:#000;font-size:11px;font-weight:bold;padding:3px 9px;border-radius:5px;}
+#exName{color:#fff;font-size:14px;font-weight:bold;}
+#animBtn{width:100%;border:2px solid;padding:10px;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer;margin-bottom:12px;}
+#animHint{border-radius:8px;padding:8px 10px;margin-bottom:10px;text-align:right;display:none;}
+#exTips{color:#bdc3c7;font-size:12px;text-align:right;line-height:1.6;margin:0 0 12px;}
+#logExBtn{width:100%;border:none;padding:10px;border-radius:6px;color:#000;font-weight:bold;font-size:12px;cursor:pointer;}
+
+/* ── Journal ── */
+#chartWrap{display:flex;height:140px;background:#05050a;border-radius:10px;padding:12px;margin-top:12px;border:1px solid #1e1e38;align-items:flex-end;gap:12px;}
+#chartYAxis{display:flex;flex-direction:column;justify-content:space-between;color:#555;font-size:9px;height:100%;}
+#chartBars{flex:1;display:flex;justify-content:space-around;align-items:flex-end;padding-left:8px;}
+.chartCol{display:flex;flex-direction:column;align-items:center;height:100%;width:40px;justify-content:flex-end;}
+.chartBar{width:100%;border-radius:4px 4px 0 0;transition:height 0.6s ease;min-height:0px;}
+.chartBarLbl{color:#bdc3c7;font-size:10px;margin-top:6px;font-weight:bold;}
+.chartBarPct{font-size:9px;margin-top:2px;}
+
+#journalHeader{display:flex;justify-content:space-between;align-items:center;}
+#clearDayBtn{background:none;border:1px solid #ff475766;color:#ff4757;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;}
+#emptyJournal{color:#2a2a45;text-align:center;padding:30px 10px;border:1px dashed #1e1e38;border-radius:10px;font-size:12px;line-height:1.5;margin-top:12px;}
+.logItem{display:flex;justify-content:space-between;align-items:center;background:#111124;padding:10px 12px;border-radius:8px;margin-bottom:6px;animation:slideIn 0.2s ease;}
+.logText{text-align:right;}
+.logTime{font-size:9px;color:#555;}
+.logTitle{color:#fff;font-size:12px;font-weight:bold;display:block;}
+.logDetail{font-size:10px;color:#888;}
+.delLogBtn{background:none;border:none;color:#ff4757;font-size:11px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topBar">
+    <div id="appTitle">⚡ SPORT MATRIX</div>
+    <div id="dayRow">
+      <button class="dayBtn active" onclick="setDay('Mon')">Mon</button>
+      <button class="dayBtn" onclick="setDay('Tue')">Tue</button>
+      <button class="dayBtn" onclick="setDay('Wed')">Wed</button>
+      <button class="dayBtn" onclick="setDay('Thu')">Thu</button>
+      <button class="dayBtn" onclick="setDay('Fri')">Fri</button>
+      <button class="dayBtn" onclick="setDay('Sat')">Sat</button>
+      <button class="dayBtn" onclick="setDay('Sun')">Sun</button>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div id="tabBar">
+    <button class="tabBtn active" onclick="setTab('run')">🏃 كارديو</button>
+    <button class="tabBtn" onclick="setTab('cal')">🍏 وجبات</button>
+    <button class="tabBtn" onclick="setTab('gym')">🦾 جيم</button>
+    <button class="tabBtn" onclick="setTab('journal')">📊 يومية</button>
+  </div>
+
+  <div id="content">
+
+    <!-- ══ CARDIO TAB ══ -->
+    <div id="pane-run" class="tabPane active">
+      <div class="card" id="mapCard">
+        <div id="mapHeader">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button id="startBtn" onclick="toggleTracking()">▶ بدء الجري</button>
+            <button id="clearBtn" onclick="clearRoute()">🗑️ مسح</button>
+            <span id="gpsWarn">⚠️ GPS غير متاح</span>
+          </div>
+          <span id="mapLabel">🏃 ROUTE TRACKER</span>
+        </div>
+
+        <div id="mapWrap">
+          <div id="mapHud">
+            <div id="hudStatus" class="idle"><span id="hudDot" style="display:none;"></span><span id="hudStatusTxt">⏸ STOPPED</span></div>
+            <div id="hudStats">
+              <div class="hudStat"><div class="hudVal" id="hudSpeed" style="color:#4ade80;">0.00</div><div class="hudUnit">km/h</div></div>
+              <div class="hudStat"><div class="hudVal" id="hudDist" style="color:#ffa500;">0.00</div><div class="hudUnit">km</div></div>
+            </div>
+          </div>
+          <canvas id="routeCanvas" width="800" height="520"></canvas>
+          <div id="mapStats">
+            <div class="mapStat"><div class="mapStatVal" id="msDist">0.00 <span class="mapStatUnit">كم</span></div><div class="mapStatLbl">المسافة</div></div>
+            <div class="mapStat"><div class="mapStatVal" id="msPoints">0 <span class="mapStatUnit">نقطة</span></div><div class="mapStatLbl">التتبع</div></div>
+            <div class="mapStat"><div class="mapStatVal" id="msCal">0 <span class="mapStatUnit">cal</span></div><div class="mapStatLbl">محروقة</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background:#0b0b14;">
+        <div class="telGrid">
+          <div class="telBox"><div class="telLabel">المسافة (كلم)</div><input id="distInput" type="number" placeholder="0.00" oninput="updateMetrics()" /></div>
+          <div class="telBox"><div class="telLabel">الوقت</div><div class="telVal" id="timerDisplay">00:00</div></div>
+        </div>
+        <div class="telGrid">
+          <div class="telBox"><div class="telLabel">السرعة كم/س</div><div class="telVal" id="speedDisplay" style="color:#4ade80;">0.00</div></div>
+          <div class="telBox"><div class="telLabel">السعرات المحروقة</div><div class="telVal" id="calDisplay" style="color:#fffa65;">0</div></div>
+        </div>
+        <div class="telBox" style="margin-top:8px;text-align:center;">
+          <div class="telLabel">Pace — دقيقة لكل كلم</div>
+          <div class="telVal" id="paceDisplay" style="font-size:28px;color:#ffa500;margin-top:4px;">--:--</div>
+        </div>
+        <div class="btnRow">
+          <button class="actionBtn" id="pauseBtn" onclick="toggleTimer()" style="background:#4ade80;color:#000;">▶ تشغيل</button>
+          <button class="actionBtn" onclick="saveRun()" style="background:#ff4757;color:#fff;">💾 حفظ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MEALS TAB ══ -->
+    <div id="pane-cal" class="tabPane">
+      <div class="card">
+        <div class="sectionTitle">📏 قياسات الجسم</div>
+        <div class="statsRow">
+          <div class="statField">
+            <div class="statLabel">الطول (سم)</div>
+            <input class="statInput" type="number" id="heightInput" placeholder="175" oninput="updateBMI()"/>
+          </div>
+          <div class="statField">
+            <div class="statLabel">الوزن (كغ)</div>
+            <input class="statInput" type="number" id="weightInput" placeholder="75" oninput="updateBMI()"/>
+          </div>
+        </div>
+        <div id="bmiBox">
+          <div id="bmiRow"><span id="bmiLabel"></span><span id="bmiVal"></span></div>
+          <div id="bmiBar"><div id="bmiBarFill" style="width:0%;"></div></div>
+          <div id="bmiTicks"><span style="color:#444;font-size:8px;">18.5</span><span style="color:#444;font-size:8px;">25</span><span style="color:#444;font-size:8px;">30</span></div>
+        </div>
+        <div id="goalBox"><span id="goalText"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="phaseRow">
+          <button class="phaseBtn active" id="bulkBtn" onclick="setPhase('bulk')">🏋️ تضخيم</button>
+          <button class="phaseBtn" id="cutBtn" onclick="setPhase('cut')">🔥 تنشيف</button>
+        </div>
+        <div id="calCircleWrap">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="45" fill="none" stroke="#1a1a2e" stroke-width="8"/>
+            <circle id="calArc" cx="55" cy="55" r="45" fill="none" stroke="#ffa500" stroke-width="8"
+              stroke-dasharray="0 283" stroke-linecap="round" transform="rotate(-90 55 55)"
+              style="transition:stroke-dasharray 0.6s ease;"/>
+            <text x="55" y="50" text-anchor="middle" fill="#fff" font-size="20" font-weight="900" font-family="monospace" id="calTotalTxt">0</text>
+            <text x="55" y="64" text-anchor="middle" fill="#666" font-size="9" id="calTargetTxt">من 3000 Kcal</text>
+          </svg>
+        </div>
+        <div id="macroRow">
+          <div class="macroRing">
+            <div class="macroRingWrap">
+              <svg width="60" height="60" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="22" fill="none" stroke="#181829" stroke-width="5"/>
+                <circle id="proteinArc" cx="30" cy="30" r="22" fill="none" stroke="#ff4757" stroke-width="5"
+                  stroke-dasharray="0 138" stroke-linecap="round" transform="rotate(-90 30 30)" style="transition:stroke-dasharray 0.5s;"/>
+              </svg>
+              <div class="macroCenter"><span class="macroG" id="proteinVal">0</span><span class="macroGUnit">g</span></div>
+            </div>
+            <div class="macroLbl" style="color:#ff4757;">بروتين</div>
+          </div>
+          <div class="macroRing">
+            <div class="macroRingWrap">
+              <svg width="60" height="60" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="22" fill="none" stroke="#181829" stroke-width="5"/>
+                <circle id="carbArc" cx="30" cy="30" r="22" fill="none" stroke="#4ade80" stroke-width="5"
+                  stroke-dasharray="0 138" stroke-linecap="round" transform="rotate(-90 30 30)" style="transition:stroke-dasharray 0.5s;"/>
+              </svg>
+              <div class="macroCenter"><span class="macroG" id="carbVal">0</span><span class="macroGUnit">g</span></div>
+            </div>
+            <div class="macroLbl" style="color:#4ade80;">كارب</div>
+          </div>
+          <div class="macroRing">
+            <div class="macroRingWrap">
+              <svg width="60" height="60" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="22" fill="none" stroke="#181829" stroke-width="5"/>
+                <circle id="fatArc" cx="30" cy="30" r="22" fill="none" stroke="#1e90ff" stroke-width="5"
+                  stroke-dasharray="0 138" stroke-linecap="round" transform="rotate(-90 30 30)" style="transition:stroke-dasharray 0.5s;"/>
+              </svg>
+              <div class="macroCenter"><span class="macroG" id="fatVal">0</span><span class="macroGUnit">g</span></div>
+            </div>
+            <div class="macroLbl" style="color:#1e90ff;">دهون</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">🔍 مستودع الأطعمة الرياضية</div>
+        <div class="foodList" id="foodList"></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle plateTitle">🍽️ طبقك الحالي</div>
+        <div id="plateItems"></div>
+        <div id="emptyPlate">الطبق فارغ — أضف وجبات من المستودع</div>
+        <div id="clearPlateRow" style="display:none;">
+          <button id="clearPlateBtn" onclick="clearPlate()">🗑️ مسح كل الوجبات</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ GYM TAB ══ -->
+    <div id="pane-gym" class="tabPane">
+      <div id="muscleGrid"></div>
+      <div id="exerciseView">
+        <button id="backBtn" onclick="showMuscleGrid()">← رجوع للكتالوج</button>
+        <div id="exerciseCard">
+          <div id="animWrap"><canvas id="gymCanvas" width="360" height="280"></canvas></div>
+          <div id="exerciseBody">
+            <div id="exHeader">
+              <span id="setsBadge"></span>
+              <strong id="exName"></strong>
+            </div>
+            <button id="animBtn" onclick="toggleAnim()">▶ عرض الأنيماسيون</button>
+            <div id="animHint"></div>
+            <p id="exTips"></p>
+            <button id="logExBtn" onclick="logExercise()">✓ إرسال للجورنال</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ JOURNAL TAB ══ -->
+    <div id="pane-journal" class="tabPane">
+      <div class="card">
+        <div class="sectionTitle">📊 مبيان الأداء — <span id="journalDay">Mon</span></div>
+        <div id="chartWrap">
+          <div id="chartYAxis"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+          <div id="chartBars">
+            <div class="chartCol">
+              <div class="chartBar" id="barNut" style="background:linear-gradient(to top,#ff4757,#ff475788);height:0%;"></div>
+              <div class="chartBarLbl">تغذية</div>
+              <div class="chartBarPct" id="barNutPct" style="color:#ff4757;">0%</div>
+            </div>
+            <div class="chartCol">
+              <div class="chartBar" id="barCard" style="background:linear-gradient(to top,#2ed573,#2ed57388);height:0%;"></div>
+              <div class="chartBarLbl">كارديو</div>
+              <div class="chartBarPct" id="barCardPct" style="color:#2ed573;">0%</div>
+            </div>
+            <div class="chartCol">
+              <div class="chartBar" id="barGym" style="background:linear-gradient(to top,#fffa65,#fffa6588);height:0%;"></div>
+              <div class="chartBarLbl">جيم</div>
+              <div class="chartBarPct" id="barGymPct" style="color:#fffa65;">0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="journalHeader">
+          <button id="clearDayBtn" onclick="clearDay()">🗑️ مسح اليوم</button>
+          <div class="sectionTitle">📋 اليومية (<span id="journalDay2">Mon</span>)</div>
+        </div>
+        <div id="journalList">
+          <div id="emptyJournal">لا توجد إدخالات بعد.<br/>ابدأ تتبع نشاطك الرياضي!</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const state = {
+  day: 'Mon',
+  tab: 'run',
+  // Cardio
+  isTracking: false,
+  timerRunning: false,
+  seconds: 0,
+  timerInterval: null,
+  dist: 0,
+  gpsPoints: [],
+  watchId: null,
+  gpsStatus: 'idle', // idle | searching | active | denied
+  // Canvas animation
+  animFrame: null,
+  pulse: 0,
+  // Gym
+  activeMusclId: null,
+  animPlaying: false,
+  gymFrame: 0,
+  gymInterval: null,
+  gymColor: '#ff4757',
+  gymAnimType: 'bench_press',
+  // Meals
+  phase: 'bulk',
+  plate: [],
+  // Journal
+  logs: [],
+};
+
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+const FOODS = [
+  {name:'صدر دجاج مشوي (100g)',cal:165,protein:31,carb:0,fat:3.6,emoji:'🍗'},
+  {name:'أرز مطبوخ (100g)',cal:130,protein:2.7,carb:28,fat:0.3,emoji:'🍚'},
+  {name:'بيض مسلوق (حبة)',cal:78,protein:6,carb:0.6,fat:5.3,emoji:'🥚'},
+  {name:'تونة بالماء (100g)',cal:116,protein:26,carb:0,fat:1,emoji:'🐟'},
+  {name:'شوفان (50g)',cal:194,protein:7,carb:34,fat:3.2,emoji:'🥣'},
+  {name:'لوز نيء (30g)',cal:174,protein:6,carb:6,fat:15,emoji:'🥜'},
+  {name:'لحم بقر قليل الدسم (150g)',cal:255,protein:33,carb:0,fat:13,emoji:'🥩'},
+  {name:'واي بروتين (1 Scoop)',cal:120,protein:25,carb:2,fat:1,emoji:'🥤'},
+  {name:'أفوكادو متوسطة',cal:240,protein:3,carb:12,fat:22,emoji:'🥑'},
+  {name:'موز كبير',cal:121,protein:1.5,carb:31,fat:0.3,emoji:'🍌'},
+  {name:'زبدة الفول السوداني (2 ملعقة)',cal:188,protein:8,carb:6,fat:16,emoji:'🥜'},
+  {name:'حليب قليل الدسم (250ml)',cal:102,protein:8,carb:12,fat:2.5,emoji:'🥛'},
+];
+
+const MUSCLES = [
+  {id:'chest',name:'عضلات الصدر',emoji:'💪',color:'#ff4757',
+    ex:{name:'Bench Press',sets:'4 × 8-12',tips:'أنزل البار لمنتصف الصدر مع تجميع لوحي الكتف. ارفع بقوة انفجارية مع الزفير.',anim:'bench_press'}},
+  {id:'back',name:'عضلات الظهر',emoji:'🦅',color:'#2ed573',
+    ex:{name:'Lat Pulldown',sets:'4 × 10-12',tips:'اسحب البار باتجاه أعلى الصدر. التركيز على الكوع لتفعيل اللاتس.',anim:'lat_pulldown'}},
+  {id:'legs',name:'عضلات الأرجل',emoji:'🦵',color:'#ffa500',
+    ex:{name:'Squat',sets:'4 × 8-10',tips:'ركبتاك فوق أصابع قدمك. الظهر مستقيم. انزل حتى تتوازى الفخذ مع الأرض.',anim:'squat'}},
+  {id:'shoulders',name:'الكتفين',emoji:'🏋️',color:'#1e90ff',
+    ex:{name:'Overhead Press',sets:'4 × 8-12',tips:'ادفع البار للأعلى فوق الرأس. شد البطن وثبّت الخصر لحماية أسفل الظهر.',anim:'overhead_press'}},
+  {id:'biceps',name:'العضلة ذات الرأسين',emoji:'💪',color:'#ff6b81',
+    ex:{name:'Barbell Curl',sets:'3 × 10-15',tips:'ثبّت الكوعين بجانب الجسم. ارفع البار بالشهيق ببطء وأنزل بتحكم.',anim:'bicep_curl'}},
+  {id:'abs',name:'عضلات البطن',emoji:'🍫',color:'#fffa65',
+    ex:{name:'Crunch',sets:'4 × 15-20',tips:'ارفع لوحي الكتف فقط. لا تشد الرقبة. التركيز الكامل على البطن.',anim:'crunch'}},
+];
+
+// ══════════════════════════════════════════════
+//  TABS & DAYS
+// ══════════════════════════════════════════════
+function setTab(t) {
+  state.tab = t;
+  document.querySelectorAll('.tabBtn').forEach((b,i)=>b.classList.toggle('active',['run','cal','gym','journal'][i]===t));
+  document.querySelectorAll('.tabPane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+t).classList.add('active');
+  if(t==='journal') updateJournal();
+}
+function setDay(d) {
+  state.day = d;
+  document.querySelectorAll('.dayBtn').forEach(b=>b.classList.toggle('active',b.textContent===d));
+  document.querySelectorAll('#journalDay,#journalDay2').forEach(el=>el.textContent=d);
+  updateJournal();
+}
+
+// ══════════════════════════════════════════════
+//  ── GPS + CANVAS MAP ──
+// ══════════════════════════════════════════════
+function toggleTracking() {
+  if (!state.isTracking) startTracking(); else stopTracking();
+}
+
+function startTracking() {
+  state.isTracking = true;
+  state.gpsPoints = [];
+  state.dist = 0;
+  document.getElementById('distInput').value = '';
+  document.getElementById('startBtn').textContent = '⏹ إيقاف الجري';
+  document.getElementById('startBtn').classList.add('running');
+  startTimer();
+  startGPS();
+  startMapAnim();
+}
+
+function stopTracking() {
+  state.isTracking = false;
+  document.getElementById('startBtn').textContent = '▶ بدء الجري';
+  document.getElementById('startBtn').classList.remove('running');
+  stopTimer();
+  stopGPS();
+  if (state.gpsPoints.length > 1) {
+    document.getElementById('clearBtn').style.display = 'block';
+    document.getElementById('mapStats').style.display = 'flex';
+  }
+  setHudStatus('idle');
+}
+
+function clearRoute() {
+  state.gpsPoints = [];
+  state.dist = 0;
+  state.seconds = 0;
+  document.getElementById('distInput').value = '';
+  document.getElementById('clearBtn').style.display = 'none';
+  document.getElementById('mapStats').style.display = 'none';
+  updateMetrics();
+}
+
+function startGPS() {
+  if (!navigator.geolocation) { setHudStatus('denied'); document.getElementById('gpsWarn').style.display='inline'; return; }
+  setHudStatus('searching');
+  state.watchId = navigator.geolocation.watchPosition(
+    pos => {
+      const {latitude:lat, longitude:lng} = pos.coords;
+      const pts = state.gpsPoints;
+      if (pts.length > 0) {
+        const prev = pts[pts.length-1];
+        const R=6371, dLat=(lat-prev.lat)*Math.PI/180, dLng=(lng-prev.lng)*Math.PI/180;
+        const a=Math.sin(dLat/2)**2+Math.cos(prev.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLng/2)**2;
+        const d=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+        state.dist += d;
+        document.getElementById('distInput').value = state.dist.toFixed(3);
+        updateMetrics();
+      }
+      state.gpsPoints.push({lat,lng});
+      setHudStatus('active');
+      updateMapStats();
+    },
+    err => { setHudStatus('denied'); document.getElementById('gpsWarn').style.display='inline'; },
+    {enableHighAccuracy:true, maximumAge:2000, timeout:15000}
+  );
+}
+
+function stopGPS() {
+  if (state.watchId !== null) { navigator.geolocation.clearWatch(state.watchId); state.watchId=null; }
+  if (state.gpsStatus !== 'denied') state.gpsStatus='idle';
+}
+
+function setHudStatus(s) {
+  state.gpsStatus = s;
+  const el = document.getElementById('hudStatus');
+  const dot = document.getElementById('hudDot');
+  const txt = document.getElementById('hudStatusTxt');
+  el.className = 'idle';
+  dot.style.display = 'none';
+  if (s==='active') { el.className='live'; dot.style.display='inline-block'; txt.textContent='● LIVE'; }
+  else if (s==='searching') { el.className='searching'; dot.style.display='inline-block'; txt.textContent='📡 GPS...'; }
+  else if (s==='denied') { txt.textContent='⚠️ GPS غير متاح'; }
+  else { txt.textContent='⏸ STOPPED'; }
+}
+
+function updateMapStats() {
+  const d = state.dist;
+  document.getElementById('msDist').innerHTML = d.toFixed(2)+' <span class="mapStatUnit">كم</span>';
+  document.getElementById('msPoints').innerHTML = state.gpsPoints.length+' <span class="mapStatUnit">نقطة</span>';
+  document.getElementById('msCal').innerHTML = Math.round(d*65)+' <span class="mapStatUnit">cal</span>';
+  document.getElementById('hudDist').textContent = d.toFixed(2);
+}
+
+// ── Canvas Map Drawing ──
+function project(lat,lng,oLat,oLng,scale,offX,offY,H) {
+  const x=(lng-oLng)*111000*Math.cos(oLat*Math.PI/180)*scale+offX;
+  const y=H-((lat-oLat)*111000*scale+offY);
+  return {x,y};
+}
+
+function startMapAnim() {
+  if (state.animFrame) cancelAnimationFrame(state.animFrame);
+  const loop = () => {
+    drawMap();
+    state.animFrame = requestAnimationFrame(loop);
+  };
+  state.animFrame = requestAnimationFrame(loop);
+}
+
+function drawMap() {
+  const canvas = document.getElementById('routeCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  state.pulse += 0.06;
+  const pulse = state.pulse;
+  const pts = state.gpsPoints;
+  const status = state.gpsStatus;
+
+  // Background
+  ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
+
+  // Compute projection
+  let scale=8, offX=W/2, offY=H/2;
+  let oLat=33.5731, oLng=-7.5898;
+  if (pts.length>0) {
+    oLat=pts[0].lat; oLng=pts[0].lng;
+    if (pts.length>1) {
+      const MARGIN=80;
+      let mn={x:Infinity,y:Infinity}, mx={x:-Infinity,y:-Infinity};
+      const raw=pts.map(p=>project(p.lat,p.lng,oLat,oLng,1,0,0,H));
+      raw.forEach(p=>{if(p.x<mn.x)mn.x=p.x;if(p.x>mx.x)mx.x=p.x;if(p.y<mn.y)mn.y=p.y;if(p.y>mx.y)mx.y=p.y;});
+      const rx=mx.x-mn.x||1, ry=mx.y-mn.y||1;
+      scale=Math.min((W-MARGIN*2)/rx,(H-MARGIN*2)/ry,120);
+      scale=Math.max(scale,3);
+      offX=W/2-(mn.x+mx.x)/2*scale;
+      offY=H/2-(mn.y+mx.y)/2*scale;
+    }
+  }
+  const toXY=(lat,lng)=>project(lat,lng,oLat,oLng,scale,offX,offY,H);
+
+  // Grid
+  const gm=scale>30?50:scale>12?100:200;
+  const gp=gm*scale;
+  const op=toXY(oLat,oLng);
+
+  ctx.save();
+  ctx.strokeStyle='#1c2535'; ctx.lineWidth=3; ctx.beginPath();
+  for(let d=-20;d<=20;d++){
+    ctx.moveTo(op.x+d*gp*2,0); ctx.lineTo(op.x+d*gp*2,H);
+    ctx.moveTo(0,op.y+d*gp*2); ctx.lineTo(W,op.y+d*gp*2);
+  }
+  ctx.stroke();
+  ctx.strokeStyle='#141922'; ctx.lineWidth=1; ctx.beginPath();
+  for(let d=-40;d<=40;d++){
+    ctx.moveTo(op.x+d*gp,0); ctx.lineTo(op.x+d*gp,H);
+    ctx.moveTo(0,op.y+d*gp); ctx.lineTo(W,op.y+d*gp);
+  }
+  ctx.stroke();
+  // Blocks
+  for(let i=-15;i<=15;i++){for(let j=-15;j<=15;j++){
+    if((i+j)%3===0) continue;
+    const isPark=(i*5+j*7)%11===0;
+    ctx.fillStyle=isPark?'#0d1a12':'#111720';
+    ctx.fillRect(op.x+i*gp*2+2,op.y+j*gp*2+2,gp*2-4,gp*2-4);
+    if(isPark){ctx.fillStyle='rgba(74,222,128,0.04)';ctx.fillRect(op.x+i*gp*2+2,op.y+j*gp*2+2,gp*2-4,gp*2-4);}
+  }}
+  // Roundabouts
+  ctx.strokeStyle='#1c2535'; ctx.lineWidth=2;
+  for(let i=-8;i<=8;i+=2){for(let j=-8;j<=8;j+=2){
+    if((i+j)%4!==0) continue;
+    ctx.beginPath(); ctx.arc(op.x+i*gp,op.y+j*gp,gp*0.35,0,Math.PI*2); ctx.stroke();
+  }}
+  ctx.restore();
+
+  // Route
+  if (pts.length>1) {
+    const XYs=pts.map(p=>toXY(p.lat,p.lng));
+    const colors=['#3b82f6','#22d3ee','#4ade80','#fbbf24','#f97316','#ef4444'];
+    // Shadow
+    ctx.save(); ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=14; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(XYs[0].x,XYs[0].y); XYs.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.stroke(); ctx.restore();
+    // Colored segments
+    for(let i=0;i<XYs.length-1;i++){
+      const r=i/Math.max(XYs.length-2,1);
+      const c=colors[Math.min(Math.floor(r*colors.length),colors.length-1)];
+      ctx.save(); ctx.strokeStyle=c; ctx.lineWidth=6; ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.shadowColor=c; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.moveTo(XYs[i].x,XYs[i].y); ctx.lineTo(XYs[i+1].x,XYs[i+1].y); ctx.stroke(); ctx.restore();
+    }
+    // Start dot
+    const sp=XYs[0];
+    ctx.save(); ctx.shadowColor='#4ade80'; ctx.shadowBlur=14;
+    ctx.fillStyle='#4ade80'; ctx.beginPath(); ctx.arc(sp.x,sp.y,8,0,Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(sp.x,sp.y,3.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#4ade80'; ctx.font='bold 11px monospace'; ctx.fillText('START',sp.x+12,sp.y-8);
+    // Live dot
+    const lp=XYs[XYs.length-1];
+    const pr=8+Math.sin(pulse)*2;
+    ctx.save(); ctx.shadowColor='#ffa500'; ctx.shadowBlur=22;
+    ctx.strokeStyle=`rgba(255,165,0,${0.15+Math.sin(pulse)*0.1})`; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.arc(lp.x,lp.y,pr+10,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle=`rgba(255,165,0,${0.35+Math.sin(pulse)*0.1})`; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(lp.x,lp.y,pr+5,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='#ffa500'; ctx.beginPath(); ctx.arc(lp.x,lp.y,8,0,Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(lp.x,lp.y,3,0,Math.PI*2); ctx.fill();
+    // HUD speed
+    document.getElementById('hudSpeed').textContent = getSpeed();
+    document.getElementById('hudDist').textContent = state.dist.toFixed(2);
+  }
+
+  // Empty state
+  if (pts.length===0) {
+    const cx=W/2, cy=H/2;
+    if (status==='searching') {
+      for(let i=0;i<3;i++){
+        const ph=(pulse*0.8+i*1.2)%(Math.PI*2);
+        const r=20+(ph/(Math.PI*2))*55, alpha=1-ph/(Math.PI*2);
+        ctx.save(); ctx.strokeStyle=`rgba(255,165,0,${alpha*0.7})`; ctx.lineWidth=2;
+        ctx.shadowColor='#ffa500'; ctx.shadowBlur=8;
+        ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); ctx.restore();
+      }
+      ctx.save(); ctx.shadowColor='#ffa500'; ctx.shadowBlur=18;
+      ctx.fillStyle='#ffa500'; ctx.beginPath(); ctx.arc(cx,cy,10,0,Math.PI*2); ctx.fill(); ctx.restore();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,165,0,0.9)'; ctx.font='bold 13px monospace'; ctx.textAlign='center';
+      ctx.fillText('📡 جاري تحديد الموقع...',cx,cy+36);
+      ctx.fillStyle='rgba(80,100,130,0.8)'; ctx.font='11px monospace';
+      ctx.fillText('يُرجى السماح بالوصول للموقع',cx,cy+54);
+    } else if (status==='denied') {
+      ctx.fillStyle='#ff4757'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+      ctx.fillText('⚠️ GPS غير مسموح به',cx,cy-10);
+      ctx.fillStyle='#556'; ctx.font='11px monospace';
+      ctx.fillText('فعّل الموقع من إعدادات المتصفح',cx,cy+12);
+    } else {
+      ctx.fillStyle='rgba(40,55,80,0.9)'; ctx.font='bold 13px monospace'; ctx.textAlign='center';
+      ctx.fillText('🛰️ اضغط "▶ بدء الجري"',cx,cy-10);
+      ctx.fillStyle='rgba(40,55,80,0.6)'; ctx.font='11px monospace';
+      ctx.fillText('لتفعيل GPS وبدء التتبع التلقائي',cx,cy+10);
+    }
+  }
+
+  // Compass
+  ctx.save();
+  ctx.fillStyle='rgba(8,12,22,0.85)'; ctx.strokeStyle='#1e2a3a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(W-30,30,20,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.moveTo(W-30,17); ctx.lineTo(W-27,27); ctx.lineTo(W-33,27); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#333'; ctx.beginPath(); ctx.moveTo(W-30,43); ctx.lineTo(W-27,33); ctx.lineTo(W-33,33); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#ef4444'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('N',W-30,15);
+  ctx.restore();
+
+  // Speed legend
+  const lg=ctx.createLinearGradient(12,0,104,0);
+  lg.addColorStop(0,'#3b82f6'); lg.addColorStop(0.33,'#4ade80'); lg.addColorStop(0.66,'#fbbf24'); lg.addColorStop(1,'#f97316');
+  ctx.fillStyle=lg; ctx.fillRect(12,H-26,92,7);
+  ctx.fillStyle='rgba(80,100,130,0.8)'; ctx.font='9px monospace';
+  ctx.textAlign='left'; ctx.fillText('بطيء',12,H-10);
+  ctx.textAlign='right'; ctx.fillText('سريع',104,H-10);
+}
+
+// ══ Timer ══
+function startTimer() {
+  if (state.timerInterval) return;
+  state.timerRunning = true;
+  document.getElementById('pauseBtn').textContent='⏸ إيقاف مؤقت';
+  document.getElementById('pauseBtn').style.background='#ffa500';
+  state.timerInterval = setInterval(()=>{
+    state.seconds++;
+    document.getElementById('timerDisplay').textContent=fmtTime(state.seconds);
+    updateMetrics();
+  },1000);
+}
+function stopTimer() {
+  clearInterval(state.timerInterval); state.timerInterval=null; state.timerRunning=false;
+  document.getElementById('pauseBtn').textContent='▶ تشغيل';
+  document.getElementById('pauseBtn').style.background='#4ade80';
+}
+function toggleTimer() {
+  if (state.timerRunning) stopTimer(); else startTimer();
+}
+function fmtTime(s){const m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function getSpeed(){
+  const d=parseFloat(document.getElementById('distInput').value)||0;
+  if(d>0&&state.seconds>0) return (d/(state.seconds/3600)).toFixed(2);
+  return '0.00';
+}
+function updateMetrics(){
+  const d=parseFloat(document.getElementById('distInput').value)||0;
+  const s=state.seconds;
+  const spd=d>0&&s>0?(d/(s/3600)).toFixed(2):'0.00';
+  const cal=Math.round(d*65+s*0.1);
+  document.getElementById('speedDisplay').textContent=spd;
+  document.getElementById('calDisplay').textContent=cal;
+  document.getElementById('hudSpeed').textContent=spd;
+  if(d>0&&s>0){const pm=(s/60)/d;const mins=Math.floor(pm);const secs=Math.floor((pm-mins)*60);
+    document.getElementById('paceDisplay').textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');}
+  else document.getElementById('paceDisplay').textContent='--:--';
+}
+function saveRun(){
+  const d=parseFloat(document.getElementById('distInput').value)||0;
+  const spd=getSpeed();
+  const cal=Math.round(d*65+state.seconds*0.1);
+  addLog('run','جري خارجي',`${d.toFixed(2)} كلم | ${spd} كم/س | ${cal} cal`);
+  stopTimer(); state.seconds=0; document.getElementById('timerDisplay').textContent='00:00';
+  stopTracking();
+}
+
+// ══════════════════════════════════════════════
+//  MEALS
+// ══════════════════════════════════════════════
+function setPhase(p){
+  state.phase=p;
+  document.getElementById('bulkBtn').classList.toggle('active',p==='bulk');
+  document.getElementById('cutBtn').classList.toggle('active',p==='cut');
+  document.getElementById('calTargetTxt').textContent='من '+(p==='bulk'?3000:2000)+' Kcal';
+  updateMacros();
+}
+function updateBMI(){
+  const h=parseFloat(document.getElementById('heightInput').value);
+  const w=parseFloat(document.getElementById('weightInput').value);
+  if(!h||!w){document.getElementById('bmiBox').style.display='none';document.getElementById('goalBox').style.display='none';return;}
+  const bmi=w/Math.pow(h/100,2);
+  let lbl='',clr='#888';
+  if(bmi<18.5){lbl='نقص وزن';clr='#60a5fa';}
+  else if(bmi<25){lbl='وزن مثالي ✓';clr='#4ade80';}
+  else if(bmi<30){lbl='زيادة وزن';clr='#fbbf24';}
+  else{lbl='سمنة';clr='#f87171';}
+  document.getElementById('bmiBox').style.display='block';
+  document.getElementById('bmiLabel').textContent=lbl;
+  document.getElementById('bmiLabel').style.color=clr;
+  document.getElementById('bmiVal').textContent='BMI: '+bmi.toFixed(1);
+  const pct=Math.min(((bmi-10)/30)*100,100);
+  document.getElementById('bmiBarFill').style.width=pct+'%';
+  const tgt=state.phase==='bulk'?3000:2000;
+  document.getElementById('goalBox').style.display='block';
+  document.getElementById('goalText').textContent='🎯 الهدف اليومي: '+Math.round(w*2)+'g بروتين | '+tgt+' سعرة';
+  updateMacros();
+}
+function updateMacros(){
+  const w=parseFloat(document.getElementById('weightInput').value)||0;
+  const totals=state.plate.reduce((a,f)=>({cal:a.cal+f.cal,protein:a.protein+f.protein,carb:a.carb+f.carb,fat:a.fat+f.fat}),{cal:0,protein:0,carb:0,fat:0});
+  const tgt=state.phase==='bulk'?3000:2000;
+  const pMax=w?w*2:180, cMax=state.phase==='bulk'?350:200, fMax=w?w:75;
+  const CIRC=138;
+  document.getElementById('calTotalTxt').textContent=totals.cal;
+  document.getElementById('calArc').setAttribute('stroke-dasharray',Math.min(totals.cal/tgt,1)*283+' 283');
+  setArc('proteinArc',totals.protein,pMax,CIRC); document.getElementById('proteinVal').textContent=Math.round(totals.protein);
+  setArc('carbArc',totals.carb,cMax,CIRC);       document.getElementById('carbVal').textContent=Math.round(totals.carb);
+  setArc('fatArc',totals.fat,fMax,CIRC);         document.getElementById('fatVal').textContent=Math.round(totals.fat);
+  updateJournal();
+}
+function setArc(id,val,max,circ){document.getElementById(id).setAttribute('stroke-dasharray',Math.min(val/max,1)*circ+' '+circ);}
+
+function renderFoods(){
+  const el=document.getElementById('foodList');
+  el.innerHTML=FOODS.map((f,i)=>`
+    <div class="foodRow">
+      <button class="addFoodBtn" onclick="addFood(${i})">+ إضافة</button>
+      <div class="foodInfo">
+        <div class="foodName">${f.emoji} ${f.name}</div>
+        <div class="foodMacro">${f.cal} cal · ب:${f.protein}g · ك:${f.carb}g · د:${f.fat}g</div>
+      </div>
+    </div>`).join('');
+}
+function addFood(i){
+  state.plate.push(FOODS[i]);
+  addLog('food','وجبة: '+FOODS[i].name,FOODS[i].cal+' cal | ب:'+FOODS[i].protein+'g ك:'+FOODS[i].carb+'g');
+  renderPlate(); updateMacros();
+}
+function renderPlate(){
+  const p=state.plate;
+  document.getElementById('emptyPlate').style.display=p.length?'none':'block';
+  document.getElementById('clearPlateRow').style.display=p.length?'flex':'none';
+  document.getElementById('plateItems').innerHTML=p.map((f,i)=>`
+    <div class="plateItem">
+      <button class="removeBtn" onclick="removeFood(${i})">×</button>
+      <span>${f.emoji} ${f.name} <span style="color:#ffa500">(${f.cal} cal)</span></span>
+    </div>`).join('');
+}
+function removeFood(i){state.plate.splice(i,1);renderPlate();updateMacros();}
+function clearPlate(){state.plate=[];renderPlate();updateMacros();}
+
+// ══════════════════════════════════════════════
+//  GYM
+// ══════════════════════════════════════════════
+function renderMuscleGrid(){
+  document.getElementById('muscleGrid').innerHTML=MUSCLES.map(m=>`
+    <div class="muscleCard" onclick="showExercise('${m.id}')" style="border-color:${m.color}22;">
+      <span class="muscleEmoji">${m.emoji}</span>
+      <span class="muscleName">${m.name}</span>
+      <span class="muscleBadge" style="color:${m.color};background:${m.color}18;">1 تمرين</span>
+    </div>`).join('');
+}
+function showExercise(id){
+  const m=MUSCLES.find(x=>x.id===id);
+  if(!m) return;
+  state.activeMusclId=id; state.gymColor=m.color; state.gymAnimType=m.ex.anim; state.animPlaying=false;
+  document.getElementById('muscleGrid').style.display='none';
+  document.getElementById('exerciseView').style.display='block';
+  document.getElementById('exerciseCard').style.borderColor=m.color+'33';
+  document.getElementById('setsBadge').textContent=m.ex.sets; document.getElementById('setsBadge').style.background=m.color;
+  document.getElementById('exName').textContent=m.ex.name;
+  document.getElementById('animBtn').textContent='▶ عرض الأنيماسيون';
+  document.getElementById('animBtn').style.background=m.color; document.getElementById('animBtn').style.color='#000';
+  document.getElementById('animBtn').style.borderColor=m.color;
+  document.getElementById('animHint').style.display='none';
+  document.getElementById('exTips').innerHTML='<span style="color:'+m.color+'">💡 </span>'+m.ex.tips;
+  document.getElementById('logExBtn').style.background=m.color;
+  stopGymAnim(); drawGymFrame();
+}
+function showMuscleGrid(){
+  stopGymAnim(); state.animPlaying=false;
+  document.getElementById('muscleGrid').style.display='grid';
+  document.getElementById('exerciseView').style.display='none';
+}
+function toggleAnim(){
+  state.animPlaying=!state.animPlaying;
+  const btn=document.getElementById('animBtn');
+  const hint=document.getElementById('animHint');
+  const m=MUSCLES.find(x=>x.id===state.activeMusclId);
+  if(state.animPlaying){
+    btn.textContent='⏸ إيقاف الأنيماسيون'; btn.style.background='#1e1e38'; btn.style.color=m.color;
+    hint.style.display='block'; hint.style.background=m.color+'10'; hint.style.border='1px solid '+m.color+'30';
+    hint.innerHTML='<span style="color:'+m.color+';font-size:10px;">● الأنيماسيون يعرض الحركة الصحيحة للتمرين</span>';
+    startGymAnim();
+  } else {
+    btn.textContent='▶ عرض الأنيماسيون'; btn.style.background=m.color; btn.style.color='#000';
+    hint.style.display='none'; stopGymAnim(); drawGymFrame();
+  }
+}
+function startGymAnim(){
+  stopGymAnim();
+  state.gymInterval=setInterval(()=>{state.gymFrame=(state.gymFrame+1)%60;drawGymFrame();},50);
+}
+function stopGymAnim(){clearInterval(state.gymInterval);state.gymInterval=null;}
+function logExercise(){
+  const m=MUSCLES.find(x=>x.id===state.activeMusclId);
+  if(!m) return;
+  addLog('gym','تمرين: '+m.ex.name,m.ex.sets);
+  stopGymAnim(); state.animPlaying=false;
+  document.getElementById('animBtn').textContent='▶ عرض الأنيماسيون';
+  const btn=document.getElementById('animBtn'); btn.style.background=m.color; btn.style.color='#000';
+  document.getElementById('animHint').style.display='none';
+  alert('✓ تم إرسال التمرين للجورنال!');
+}
+
+// ─── Gym Canvas Animations ───
+function drawGymFrame(){
+  const canvas=document.getElementById('gymCanvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const f=state.gymFrame, t=f/60;
+  const sin=Math.sin(t*2*Math.PI), eased=(1-Math.cos(t*2*Math.PI))/2;
+  const C=state.gymColor;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#06060b'; ctx.fillRect(0,0,W,H);
+
+  const anim=state.gymAnimType;
+
+  if(anim==='bench_press'){
+    const armY=100+sin*32, barY=86+sin*32;
+    ctx.fillStyle='#1a1a2e'; ctx.beginPath(); ctx.roundRect(54,158,216,22,7); ctx.fill();
+    ctx.fillStyle='#111'; ctx.fillRect(72,180,14,36); ctx.fillRect(238,180,14,36);
+    ctx.fillStyle='#2a2a4a'; ctx.beginPath(); ctx.ellipse(162,148,54,16,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#d4a574'; ctx.beginPath(); ctx.arc(270,140,22,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#888'; ctx.fillRect(36,barY-4,252,9);
+    ctx.shadowColor=C; ctx.shadowBlur=10;
+    ctx.fillStyle=C; ctx.beginPath(); ctx.arc(36,barY,14,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(288,barY,14,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='#d4a574'; ctx.lineWidth=11; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(135,136); ctx.lineTo(82,armY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(189,136); ctx.lineTo(244,armY); ctx.stroke();
+    ctx.fillStyle=C; ctx.globalAlpha=0.15+eased*0.2;
+    ctx.beginPath(); ctx.ellipse(162,139,36,11,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  }
+  else if(anim==='lat_pulldown'){
+    const ae=eased*40, ey=100+eased*36;
+    ctx.fillStyle='#444'; ctx.fillRect(45,27,270,11);
+    ctx.strokeStyle='#666'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(162,38); ctx.lineTo(162,68); ctx.stroke();
+    ctx.fillStyle='#888'; ctx.fillRect(108,68,108,9);
+    ctx.fillStyle='#1a1a2e'; ctx.beginPath(); ctx.roundRect(126,180,72,14,6); ctx.fill();
+    ctx.fillStyle='#2a2a4a'; ctx.beginPath(); ctx.ellipse(162,166,32,18,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#d4a574'; ctx.beginPath(); ctx.arc(162,130,20,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#d4a574'; ctx.lineWidth=13; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(162,130); ctx.lineTo(162-45+ae*0.54,ey); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(162,130); ctx.lineTo(162+45-ae*0.54,ey); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(162-45+ae*0.54,ey); ctx.lineTo(117,77); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(162+45-ae*0.54,ey); ctx.lineTo(207,77); ctx.stroke();
+    ctx.fillStyle=C; ctx.globalAlpha=0.1+eased*0.25;
+    ctx.beginPath(); ctx.ellipse(162,158,27,16,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  }
+  else if(anim==='squat'){
+    const hipY=117+eased*45, kx1=135-eased*22, kx2=189+eased*22;
+    ctx.shadowColor=C; ctx.shadowBlur=10;
+    ctx.fillStyle='#888'; ctx.fillRect(72,86,216,9);
+    ctx.fillStyle=C; ctx.beginPath(); ctx.arc(72,90,13,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(288,90,13,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='#d4a574'; ctx.lineWidth=18; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(162,95); ctx.lineTo(162,hipY); ctx.stroke();
+    ctx.fillStyle='#d4a574'; ctx.beginPath(); ctx.arc(162,72,22,0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=14; ctx.beginPath(); ctx.moveTo(162,hipY); ctx.lineTo(kx1,hipY+45); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(162,hipY); ctx.lineTo(kx2,hipY+45); ctx.stroke();
+    ctx.lineWidth=13; ctx.beginPath(); ctx.moveTo(kx1,hipY+45); ctx.lineTo(126,230); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(kx2,hipY+45); ctx.lineTo(198,230); ctx.stroke();
+    ctx.strokeStyle='#555'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(72,234); ctx.lineTo(288,234); ctx.stroke();
+    ctx.fillStyle=C; ctx.globalAlpha=0.12+eased*0.2;
+    ctx.beginPath(); ctx.ellipse(kx1+9,hipY+22,14,22,(-20*Math.PI/180),0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(kx2-9,hipY+22,14,22,(20*Math.PI/180),0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  else if(anim==='overhead_press'){
+    const barY=63+(1-eased)*54, as=eased;
+    ctx.shadowColor=C; ctx.shadowBlur=10;
+    ctx.fillStyle='#888'; ctx.fillRect(54,barY-4,252,9);
+    ctx.fillStyle=C; ctx.beginPath(); ctx.arc(54,barY,14,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(306,barY,14,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='#d4a574'; ctx.lineWidth=18; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(162,144); ctx.lineTo(162,198); ctx.stroke();
+    ctx.fillStyle='#d4a574'; ctx.beginPath(); ctx.arc(162,122,22,0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=13; ctx.beginPath(); ctx.moveTo(151,135); ctx.lineTo(108-as*9,barY+7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(173,135); ctx.lineTo(216+as*9,barY+7); ctx.stroke();
+    ctx.strokeStyle='#2a2a4a'; ctx.lineWidth=16;
+    ctx.beginPath(); ctx.moveTo(153,198); ctx.lineTo(126,234); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(171,198); ctx.lineTo(198,234); ctx.stroke();
+    ctx.fillStyle=C; ctx.globalAlpha=0.15+eased*0.25;
+    ctx.beginPath(); ctx.arc(126,140,13,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(198,140,13,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  }
+  else if(anim==='bicep_curl'){
+    const ae=eased, fy=135-ae*63, fx=171+(1-ae)*27;
+    ctx.strokeStyle='#d4a574'; ctx.lineWidth=18; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(162,117); ctx.lineTo(162,189); ctx.stroke();
+    ctx.fillStyle='#d4a574'; ctx.beginPath(); ctx.arc(162,94,22,0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=14; ctx.beginPath(); ctx.moveTo(140,135); ctx.lineTo(130,180); ctx.stroke();
+    ctx.lineWidth=13; ctx.beginPath(); ctx.moveTo(130,180); ctx.lineTo(fx-36,fy+45); ctx.stroke();
+    ctx.fillStyle='#555'; ctx.beginPath(); ctx.arc(fx-40,fy+40,13,0,Math.PI*2); ctx.fill();
+    ctx.shadowColor=C; ctx.shadowBlur=8;
+    ctx.fillStyle=C; ctx.beginPath(); ctx.arc(fx-25,fy+40,9,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+    ctx.strokeStyle='#d4a574'; ctx.lineWidth=14;
+    ctx.beginPath(); ctx.moveTo(184,135); ctx.lineTo(194,180); ctx.stroke();
+    ctx.lineWidth=13; ctx.beginPath(); ctx.moveTo(194,180); ctx.lineTo(207,207); ctx.stroke();
+    ctx.fillStyle=C; ctx.globalAlpha=0.1+eased*0.3;
+    ctx.beginPath(); ctx.ellipse(130,162,13,18,(-10*Math.PI/180),0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle='#2a2a4a'; ctx.lineWidth=16;
+    ctx.beginPath(); ctx.moveTo(153,189); ctx.lineTo(130,234); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(171,189); ctx.lineTo(194,234); ctx.stroke();
+  }
+  else if(anim==='crunch'){
+    const sy=153-eased*40;
+    ctx.fillStyle='#1a1a2e'; ctx.fillRect(36,194,288,7);
+    ctx.strokeStyle='#2a2a4a'; ctx.lineWidth=18; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(162,194); ctx.lineTo(90,194); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(90,194); ctx.lineTo(63,194); ctx.stroke();
+    ctx.strokeStyle='#d4a574'; ctx.lineWidth=18;
+    ctx.beginPath(); ctx.moveTo(162,194); ctx.lineTo(162-eased*9,sy+18); ctx.stroke();
+    ctx.fillStyle='#d4a574'; ctx.beginPath(); ctx.arc(162-eased*14,sy,20,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#2a2a4a'; ctx.lineWidth=16;
+    ctx.beginPath(); ctx.moveTo(162,194); ctx.lineTo(207,162); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(207,162); ctx.lineTo(234,194); ctx.stroke();
+    ctx.lineWidth=9; ctx.strokeStyle='#d4a574';
+    ctx.beginPath(); ctx.moveTo(162-eased*9,sy+9); ctx.lineTo(144-eased*14,sy-9); ctx.stroke();
+    for(let i=0;i<3;i++){
+      ctx.fillStyle=C; ctx.globalAlpha=eased*0.3;
+      ctx.beginPath(); ctx.ellipse(162-eased*7,sy+25+i*14,14,5,0,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  JOURNAL
+// ══════════════════════════════════════════════
+function addLog(cat,title,detail){
+  const now=new Date().toLocaleTimeString('ar-EG');
+  state.logs.unshift({id:Date.now(),day:state.day,cat,title,detail,time:now});
+  updateJournal();
+}
+function updateJournal(){
+  const logs=state.logs.filter(l=>l.day===state.day);
+  const totals=state.plate.reduce((a,f)=>({cal:a.cal+f.cal}),{cal:0});
+  const tgt=state.phase==='bulk'?3000:2000;
+  const nutPct=Math.min((totals.cal/tgt)*100,100);
+  const cardPct=state.seconds>0?Math.min((state.seconds/3600)*100,100):0;
+  const gymPct=logs.filter(l=>l.cat==='gym').length>0?90:0;
+  setBar('barNut',nutPct,'barNutPct');
+  setBar('barCard',cardPct,'barCardPct');
+  setBar('barGym',gymPct,'barGymPct');
+  const el=document.getElementById('journalList');
+  if(logs.length===0){el.innerHTML='<div id="emptyJournal">لا توجد إدخالات ليوم '+state.day+' بعد.<br/>ابدأ تتبع نشاطك الرياضي!</div>';return;}
+  el.innerHTML=logs.map(l=>`
+    <div class="logItem" style="border-right:4px solid ${l.cat==='run'?'#2ed573':l.cat==='food'?'#ffa500':'#ff4757'};">
+      <button class="delLogBtn" onclick="delLog(${l.id})">🗑️</button>
+      <div class="logText">
+        <span class="logTime">${l.time}</span>
+        <span class="logTitle">${l.title}</span>
+        <span class="logDetail">${l.detail}</span>
+      </div>
+    </div>`).join('');
+}
+function setBar(barId,pct,pctId){
+  const el=document.getElementById(barId);
+  if(el) el.style.height=pct+'%';
+  const pe=document.getElementById(pctId);
+  if(pe) pe.textContent=Math.round(pct)+'%';
+}
+function delLog(id){state.logs=state.logs.filter(l=>l.id!==id);updateJournal();}
+function clearDay(){state.logs=state.logs.filter(l=>l.day!==state.day);updateJournal();}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+renderFoods();
+renderMuscleGrid();
+updateMacros();
+// Start map idle animation
+startMapAnim();
+// Draw gym frame on load
+drawGymFrame();
+</script>
+</body>
+</html>
