@@ -1,0 +1,12 @@
+{
+  "id": "SI7ATI_SN",
+  "name": "FitPro Arabia",
+  "short_name": "FitPro",
+  "description": "تطبيق رياضي لإدارة التمارين والصحة",
+  "start_url": "https://lgaidsofian-coder.github.io/Si7ati-Sn/",
+  "display": "standalone",
+  "background_color": "#5BB349",
+  "theme_color": "#000000",
+  "orientation": "portrait"
+}
+
