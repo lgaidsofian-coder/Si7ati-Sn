@@ -286,10 +286,11 @@ body{background:#040407;color:#fff;font-family:'Segoe UI',sans-serif;overflow-x:
               </svg>
               <div class="macroCenter"><span class="macroG" id="proteinVal">0</span><span class="macroGUnit">g</span></div>
             </div>
-            <div class="macroLbl" style="color:#ff4757;">بروتين</div>
-          </div>
-          <div class="macroRing">
-            <div class="macroRingWrap">
+            const heightInMeters = height / 100;
+          const bmi = weight / (heightInMeters * heightInMeters);
+
+      bmiValue.textContent = bmi.toFixed(1);
+            let category = "";
               <svg width="60" height="60" viewBox="0 0 60 60">
                 <circle cx="30" cy="30" r="22" fill="none" stroke="#181829" stroke-width="5"/>
                 <circle id="carbArc" cx="30" cy="30" r="22" fill="none" stroke="#4ade80" stroke-width="5"
